@@ -1,0 +1,29 @@
+# ملفات حساسة - لا ترفعها على GitHub
+.env
+*.db
+bot-backup-*.db
+
+# مجلدات
+node_modules/
+logs/
+
+# ملفات النظام
+.DS_Store
+Thumbs.db
+*.log
+
+# ملفات مؤقتة
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# ملفات IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# ملفات النسخ الاحتياطي
+*.backup
+*.bak

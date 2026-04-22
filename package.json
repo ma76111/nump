@@ -1,0 +1,17 @@
+{
+  "name": "telegram-ads-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for sending advertisements",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": ["telegram", "bot"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "better-sqlite3": "^11.0.0",
+    "dotenv": "^16.4.5"
+  }
+}
