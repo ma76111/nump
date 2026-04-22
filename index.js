@@ -1350,8 +1350,7 @@ function handleRestoreTask(userId, isAdmin) {
   // حساب الوقت المتبقي الحقيقي بناءً على expires_at
   const task = db.prepare('SELECT expires_at FROM tasks WHERE id = ?').get(cancelledTask.taskId);
   const timeQuery = db.prepare("SELECT (strftime('%s', expires_at) - strftime('%s', 'now')) as remaining_seconds FROM tasks WHERE id = ?").get(cancelledTask.taskId);
-  const remainingSeconds = timeQuery && timeQuery.remaining_seconds ? parseInt(timeQuery.remaining_seconds) : 0;
-  const remainingMinutes = Math.floor(remainingSeconds / 60);
+  const remainingMinutes = Math.floor(timeQuery.remaining_seconds / 60);
   
   let timeMessage = '';
   if (remainingMinutes > 0) {

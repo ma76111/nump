@@ -57,6 +57,7 @@ db.exec(`
     proof_count INTEGER DEFAULT 0,
     proof_photos TEXT DEFAULT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME,
     completed_at DATETIME,
     FOREIGN KEY (user_id) REFERENCES users(user_id),
     FOREIGN KEY (group_id) REFERENCES number_groups(id)
