@@ -46,6 +46,18 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+
+  CREATE TABLE IF NOT EXISTS withdrawal_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    amount REAL,
+    method TEXT,
+    wallet_info TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  );
 `);
 
 // إعدادات افتراضية
@@ -72,6 +84,10 @@ try {
 
 try {
   db.exec(`ALTER TABLE users ADD COLUMN ban_time DATETIME DEFAULT NULL`);
+} catch (e) {}
+
+try {
+  db.exec(`ALTER TABLE tasks ADD COLUMN expires_at DATETIME`);
 } catch (e) {}
 
 module.exports = db;
