@@ -1032,16 +1032,20 @@ async function handleNewTask(userId, isAdmin) {
       // الأرقام + المكافأة
       setTimeout(() => {
         const numbersCount = group.numbers.split('\n').filter(n => n.trim().length > 0).length;
+        const numbersArray = group.numbers.split('\n').filter(n => n.trim().length > 0);
+        const formattedNumbers = numbersArray.map(num => `\`${num.trim()}\``).join('\n');
+        
         bot.sendMessage(userId, 
           `📱 الأرقام (${numbersCount} رقم):\n\n` +
-          `${group.numbers}\n\n` +
+          `${formattedNumbers}\n\n` +
           `💵 المكافأة: ${reward} جنيه\n\n` +
           `📋 المطلوب:\n` +
           `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
           `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
           `⚠️ الحد الأدنى: 11 صورة\n` +
           `⚠️ الحد الأقصى: 15 صورة\n` +
-          `الصور المستلمة: ${task.proof_count}/15`
+          `الصور المستلمة: ${task.proof_count}/15`,
+          { parse_mode: 'Markdown' }
         );
       }, 1200);
       
@@ -1112,16 +1116,20 @@ async function handleNewTask(userId, isAdmin) {
     // الأرقام + المكافأة
     setTimeout(() => {
       const numbersCount = group.numbers.split('\n').filter(n => n.trim().length > 0).length;
+      const numbersArray = group.numbers.split('\n').filter(n => n.trim().length > 0);
+      const formattedNumbers = numbersArray.map(num => `\`${num.trim()}\``).join('\n');
+      
       bot.sendMessage(userId, 
         `📱 الأرقام (${numbersCount} رقم):\n\n` +
-        `${group.numbers}\n\n` +
+        `${formattedNumbers}\n\n` +
         `💵 المكافأة: ${reward} جنيه\n\n` +
         `📋 المطلوب:\n` +
         `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
         `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
         `⚠️ الحد الأدنى: 11 صورة\n` +
         `⚠️ الحد الأقصى: 15 صورة\n` +
-        `الصور المستلمة: ${activeTask.proof_count}/15`
+        `الصور المستلمة: ${activeTask.proof_count}/15`,
+        { parse_mode: 'Markdown' }
       );
     }, 1200);
     
@@ -1169,16 +1177,20 @@ async function handleNewTask(userId, isAdmin) {
   // 3. الانتظار 1200ms ثم إرسال الأرقام + المكافأة + المتطلبات
   setTimeout(() => {
     const numbersCount = availableGroup.numbers.split('\n').filter(n => n.trim().length > 0).length;
+    const numbersArray = availableGroup.numbers.split('\n').filter(n => n.trim().length > 0);
+    const formattedNumbers = numbersArray.map(num => `\`${num.trim()}\``).join('\n');
+    
     bot.sendMessage(userId, 
       `📱 الأرقام (${numbersCount} رقم):\n\n` +
-      `${availableGroup.numbers}\n\n` +
+      `${formattedNumbers}\n\n` +
       `💵 المكافأة: ${reward} جنيه\n\n` +
       `📋 المطلوب:\n` +
       `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
       `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
       `⚠️ الحد الأدنى: 11 صورة\n` +
       `⚠️ الحد الأقصى: 15 صورة\n` +
-      `عند الانتهاء، أرسل الصور واحدة تلو الأخرى.`
+      `عند الانتهاء، أرسل الصور واحدة تلو الأخرى.`,
+      { parse_mode: 'Markdown' }
     );
   }, 1200);
   
