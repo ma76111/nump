@@ -1347,11 +1347,10 @@ function handleRestoreTask(userId, isAdmin) {
   
   logInfo('User restored cancelled task - second chance', { userId, taskId: cancelledTask.taskId });
   
-  // حساب الوقت المتبقي
-  const task = db.prepare('SELECT created_at FROM tasks WHERE id = ?').get(cancelledTask.taskId);
-  const timeQuery = db.prepare("SELECT (strftime('%s', 'now') - strftime('%s', created_at)) as elapsed_seconds FROM tasks WHERE id = ?").get(cancelledTask.taskId);
-  const elapsedMinutes = Math.floor(timeQuery.elapsed_seconds / 60);
-  const remainingMinutes = 90 - elapsedMinutes;
+  // حساب الوقت المتبقي الحقيقي بناءً على expires_at
+  const task = db.prepare('SELECT expires_at FROM tasks WHERE id = ?').get(cancelledTask.taskId);
+  const timeQuery = db.prepare("SELECT (strftime('%s', expires_at) - strftime('%s', 'now')) as remaining_seconds FROM tasks WHERE id = ?").get(cancelledTask.taskId);
+  const remainingMinutes = Math.floor(timeQuery.remaining_seconds / 60);
   
   let timeMessage = '';
   if (remainingMinutes > 0) {
