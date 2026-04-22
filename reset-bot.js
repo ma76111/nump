@@ -97,7 +97,24 @@ db.exec(`
     added_by INTEGER DEFAULT NULL
   )
 `);
-console.log('  ✅ Admins table created\n');
+console.log('  ✅ Admins table created');
+
+// 6. Withdrawal requests table
+console.log('  → Creating withdrawal_requests table...');
+db.exec(`
+  CREATE TABLE IF NOT EXISTS withdrawal_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    amount REAL,
+    method TEXT,
+    wallet_info TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    processed_at DATETIME,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+  )
+`);
+console.log('  ✅ Withdrawal requests table created\n');
 
 // Insert default settings
 console.log('⚙️  Inserting default settings...');
@@ -143,7 +160,13 @@ db.close();
 console.log('\n✅ Bot reset completed successfully!\n');
 console.log('📊 Summary:');
 console.log('  • Fresh database created');
-console.log('  • All tables created (users, tasks, number_groups, settings, admins)');
+console.log('  • All tables created:');
+console.log('    - users (with ban system)');
+console.log('    - tasks (with expires_at)');
+console.log('    - number_groups');
+console.log('    - settings');
+console.log('    - admins');
+console.log('    - withdrawal_requests (NEW!)');
 console.log('  • Default settings inserted:');
 console.log('    - reward_amount: 10 جنيه');
 console.log('    - task_timeout: 90 دقيقة');
@@ -152,9 +175,16 @@ console.log('    - how_to_work_video: none (لم يتم رفع فيديو)');
 console.log(`  • Main admin added (ID: ${mainAdminId})`);
 console.log('  • Logs cleared');
 console.log(`  • Backup saved: ${backupPath}\n`);
+console.log('🔒 Security features enabled:');
+console.log('  • Race condition protection');
+console.log('  • Rate limiting (1 message/second)');
+console.log('  • Markdown injection protection');
+console.log('  • Image size limit (20MB)');
+console.log('  • Duplicate withdrawal prevention\n');
 console.log('🚀 Next steps:');
 console.log('  1. Make sure your .env file contains:');
 console.log('     BOT_TOKEN=your_bot_token_here');
 console.log(`     ADMIN_ID=${mainAdminId}`);
 console.log('  2. Start the bot: node index.js');
-console.log('  3. Upload tutorial video from admin panel\n');
+console.log('  3. Upload tutorial video from admin panel');
+console.log('  4. Add number groups from admin panel\n');
