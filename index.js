@@ -1357,13 +1357,11 @@ function handleRestoreTask(userId, isAdmin) {
     const hours = Math.floor(remainingMinutes / 60);
     const minutes = remainingMinutes % 60;
     timeMessage = `⏰ الوقت المتبقي: ${hours > 0 ? hours + ' ساعة و' : ''}${minutes} دقيقة`;
-  } else {
-    timeMessage = '⏰ انتهى الوقت!';
   }
   
   bot.sendMessage(userId, 
     `✅ تم استرجاع المهمة بنجاح!\n\n` +
-    `${timeMessage}\n\n` +
+    (timeMessage ? `${timeMessage}\n\n` : '') +
     `⚠️ تحذير: هذه فرصتك الأخيرة!\n` +
     `إذا ألغيت المهمة مرة أخرى، سيتم حذفها نهائياً بدون إمكانية الاسترجاع.`,
     {
