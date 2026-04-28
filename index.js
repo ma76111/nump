@@ -954,7 +954,13 @@ bot.on('callback_query', async (query) => {
   }
   else if (data.startsWith('delete_group_') && isAdmin(userId)) {
     const groupId = parseInt(data.split('_')[2]);
+    
+    // حذف جميع المهام المرتبطة بهذه المجموعة أولاً
+    db.prepare('DELETE FROM tasks WHERE group_id = ?').run(groupId);
+    
+    // ثم حذف المجموعة
     db.prepare('DELETE FROM number_groups WHERE id = ?').run(groupId);
+    
     bot.answerCallbackQuery(query.id, { text: '✅ تم حذف المجموعة', show_alert: true });
     showAdminGroups(userId);
   }
