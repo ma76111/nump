@@ -559,7 +559,7 @@ bot.on('message', async (msg) => {
   else if (text === '📖 طريقة العمل') {
     handleHowToWork(userId);
   }
-  else if (text === '⚙️ لوحة التحكم' && isAdmin) {
+  else if (text === '⚙️ لوحة التحكم' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     bot.sendMessage(userId, '⚙️ لوحة التحكم:', { reply_markup: getAdminKeyboard(userId) });
   }
