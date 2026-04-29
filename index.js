@@ -542,7 +542,8 @@ bot.on('message', async (msg) => {
   
   // معالجة الأزرار الرئيسية
   if (text === '📢 الحصول على مهمة جديدة') {
-    handleNewTask(userId, isAdmin);
+    const isAdminUser = isAdmin(userId);
+    handleNewTask(userId, isAdminUser);
   }
   else if (text === '👤 ملفي') {
     handleProfile(userId);
@@ -588,17 +589,20 @@ bot.on('message', async (msg) => {
   else if (text === '🔙 رجوع') {
     // إلغاء أي حالة انتظار والعودة إلى لوحة التحكم
     delete userStates[userId];
-    if (isAdmin) {
+    const isAdminUser = isAdmin(userId);
+    if (isAdminUser) {
       bot.sendMessage(userId, '⚙️ لوحة التحكم:', { reply_markup: getAdminKeyboard(userId) });
     } else {
       bot.sendMessage(userId, 'القائمة الرئيسية:', { reply_markup: getMainKeyboard(false) });
     }
   }
   else if (text === '❌ إلغاء المهمة') {
-    handleCancelTask(userId, isAdmin);
+    const isAdminUser = isAdmin(userId);
+    handleCancelTask(userId, isAdminUser);
   }
   else if (text === '↩️ استرجاع المهمة') {
-    handleRestoreTask(userId, isAdmin);
+    const isAdminUser = isAdmin(userId);
+    handleRestoreTask(userId, isAdminUser);
   }
   else if (text === '⏱️ عرض الوقت المتبقي') {
     handleShowRemainingTime(userId);
@@ -607,29 +611,31 @@ bot.on('message', async (msg) => {
     handleStartProofSubmission(userId);
   }
   else if (text === '✅ تأكيد الإرسال') {
-    handleConfirmProofSubmission(userId, isAdmin);
+    const isAdminUser = isAdmin(userId);
+    handleConfirmProofSubmission(userId, isAdminUser);
   }
   else if (text === '❌ إلغاء وحذف الصور') {
-    handleCancelProofSubmission(userId, isAdmin);
+    const isAdminUser = isAdmin(userId);
+    handleCancelProofSubmission(userId, isAdminUser);
   }
   // أزرار الأدمن
-  else if (text === '👥 إدارة المستخدمين' && isAdmin) {
+  else if (text === '👥 إدارة المستخدمين' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showAdminUsersMenu(userId);
   }
-  else if (text === '📊 إحصائيات البوت' && isAdmin) {
+  else if (text === '📊 إحصائيات البوت' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showBotStats(userId);
   }
-  else if (text === '💵 تعديل المكافأة' && isAdmin) {
+  else if (text === '💵 تعديل المكافأة' && isAdmin(userId)) {
     userStates[userId] = 'admin_reward';
     bot.sendMessage(userId, '💵 أرسل قيمة المكافأة الجديدة:');
   }
-  else if (text === '📝 تعديل الإعلان' && isAdmin) {
+  else if (text === '📝 تعديل الإعلان' && isAdmin(userId)) {
     userStates[userId] = 'admin_ad';
     bot.sendMessage(userId, '📝 أرسل نص الإعلان الجديد:');
   }
-  else if (text === '⏰ تعديل وقت المهمة' && isAdmin) {
+  else if (text === '⏰ تعديل وقت المهمة' && isAdmin(userId)) {
     userStates[userId] = 'admin_timeout';
     const currentTimeout = getSetting('task_timeout');
     bot.sendMessage(userId, 
@@ -637,7 +643,7 @@ bot.on('message', async (msg) => {
       `أرسل الوقت الجديد بالدقائق (مثال: 60 أو 120):`
     );
   }
-  else if (text === '💲 تعديل سعر الدولار' && isAdmin) {
+  else if (text === '💲 تعديل سعر الدولار' && isAdmin(userId)) {
     userStates[userId] = 'admin_usd_rate';
     const currentRate = getSetting('usd_rate') || '50';
     bot.sendMessage(userId, 
@@ -645,15 +651,15 @@ bot.on('message', async (msg) => {
       `أرسل السعر الجديد (مثال: 50 أو 55):`
     );
   }
-  else if (text === '📱 إدارة المجموعات' && isAdmin) {
+  else if (text === '📱 إدارة المجموعات' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showAdminGroups(userId);
   }
-  else if (text === '📋 المجموعات المعلقة' && isAdmin) {
+  else if (text === '📋 المجموعات المعلقة' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showPendingGroups(userId);
   }
-  else if (text === '✅ الموافقة والدفع' && isAdmin) {
+  else if (text === '✅ الموافقة والدفع' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showPendingApprovals(userId);
   }
