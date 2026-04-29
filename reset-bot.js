@@ -123,6 +123,7 @@ const defaultSettings = [
   { key: 'reward_amount', value: '10', description: 'المكافأة لكل مهمة (جنيه)' },
   { key: 'advertisement_text', value: 'هذا نص الإعلان الافتراضي. يمكنك تغييره من لوحة التحكم.', description: 'نص الإعلان' },
   { key: 'support_text', value: 'للتواصل مع الدعم:\n@YourSupportUsername', description: 'نص الدعم الفني' },
+  { key: 'task_requirements', value: '1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام', description: 'نص المطلوب في المهمة' },
   { key: 'task_timeout', value: '90', description: 'وقت إتمام المهمة (دقيقة)' },
   { key: 'usd_rate', value: '50', description: 'سعر الدولار (جنيه)' },
   { key: 'how_to_work_video', value: 'none', description: 'فيديو شرح طريقة العمل' }
@@ -169,6 +170,7 @@ console.log('    - admins');
 console.log('    - withdrawal_requests (NEW!)');
 console.log('  • Default settings inserted:');
 console.log('    - reward_amount: 10 جنيه');
+console.log('    - task_requirements: نص المطلوب (قابل للتعديل)');
 console.log('    - task_timeout: 90 دقيقة');
 console.log('    - usd_rate: 50 جنيه للدولار');
 console.log('    - how_to_work_video: none (لم يتم رفع فيديو)');
