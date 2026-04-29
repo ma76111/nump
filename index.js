@@ -275,9 +275,10 @@ function getAdminKeyboard(userId) {
     ['💵 تعديل المكافأة', '📝 تعديل الإعلان'],
     ['⏰ تعديل وقت المهمة', '💲 تعديل سعر الدولار'],
     ['📞 تعديل نص الدعم', '📋 تعديل المطلوب'],
+    ['📸 تعديل حدود الصور', '🎥 تحديث فيديو الشرح'],
     ['📂 إدارة المجموعات', '⏳ المجموعات المعلقة'],
     ['✅ الموافقة والدفع', '💸 طلبات السحب'],
-    ['📋 تقرير مستخدم', '🎥 تحديث فيديو الشرح']
+    ['📋 تقرير مستخدم']
   ];
   
   // إضافة أزرار خاصة بالأدمن الرئيسي فقط
@@ -472,9 +473,10 @@ bot.on('message', async (msg) => {
         userProofPhotos[userId] = [];
       }
       
-      // التحقق من عدم تجاوز 15 صورة
-      if (userProofPhotos[userId].length >= 15) {
-        return bot.sendMessage(userId, '⚠️ لقد وصلت للحد الأقصى (15 صورة)');
+      // التحقق من عدم تجاوز الحد الأقصى
+      const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
+      if (userProofPhotos[userId].length >= maxScreenshots) {
+        return bot.sendMessage(userId, `⚠️ لقد وصلت للحد الأقصى (${maxScreenshots} صورة)`);
       }
       
       // التحقق من حجم الصورة (الحد الأقصى 20 ميجابايت)
@@ -677,6 +679,41 @@ bot.on('message', async (msg) => {
     bot.sendMessage(userId, 
       `📋 النص الحالي:\n\n${currentRequirements}\n\n` +
       `أرسل نص المطلوب الجديد:`
+    );
+  }
+  else if (text === '📸 تعديل حدود الصور' && isAdmin(userId)) {
+    const minScreenshots = getSetting('min_screenshots') || '11';
+    const maxScreenshots = getSetting('max_screenshots') || '15';
+    bot.sendMessage(userId, 
+      `📸 الحدود الحالية:\n\n` +
+      `الحد الأدنى: ${minScreenshots} صورة\n` +
+      `الحد الأقصى: ${maxScreenshots} صورة\n\n` +
+      `اختر ما تريد تعديله:`,
+      {
+        reply_markup: {
+          keyboard: [
+            ['📉 تعديل الحد الأدنى', '📈 تعديل الحد الأقصى'],
+            ['🔙 رجوع']
+          ],
+          resize_keyboard: true
+        }
+      }
+    );
+  }
+  else if (text === '📉 تعديل الحد الأدنى' && isAdmin(userId)) {
+    userStates[userId] = 'admin_min_screenshots';
+    const currentMin = getSetting('min_screenshots') || '11';
+    bot.sendMessage(userId, 
+      `📉 الحد الأدنى الحالي: ${currentMin} صورة\n\n` +
+      `أرسل الحد الأدنى الجديد (رقم):`
+    );
+  }
+  else if (text === '📈 تعديل الحد الأقصى' && isAdmin(userId)) {
+    userStates[userId] = 'admin_max_screenshots';
+    const currentMax = getSetting('max_screenshots') || '15';
+    bot.sendMessage(userId, 
+      `📈 الحد الأقصى الحالي: ${currentMax} صورة\n\n` +
+      `أرسل الحد الأقصى الجديد (رقم):`
     );
   }
   else if (text === '🎥 تحديث فيديو الشرح' && isAdmin(userId)) {
@@ -1148,6 +1185,8 @@ async function handleNewTask(userId, isAdminUser) {
         const taskRequirements = getSetting('task_requirements') || 
           `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
           `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
+        const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+        const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
         
         bot.sendMessage(userId, 
           `📱 الأرقام (${numbersCount} رقم):\n\n` +
@@ -1155,9 +1194,9 @@ async function handleNewTask(userId, isAdminUser) {
           `💵 المكافأة: ${reward} جنيه\n\n` +
           `📋 المطلوب:\n` +
           `${taskRequirements}\n\n` +
-          `⚠️ الحد الأدنى: 11 صورة\n` +
-          `⚠️ الحد الأقصى: 15 صورة\n` +
-          `الصور المستلمة: ${task.proof_count}/15`,
+          `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
+          `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n` +
+          `الصور المستلمة: ${task.proof_count}/${maxScreenshots}`,
           { parse_mode: 'Markdown' }
         );
       }, 1200);
@@ -1232,6 +1271,8 @@ async function handleNewTask(userId, isAdminUser) {
       const taskRequirements = getSetting('task_requirements') || 
         `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
         `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
+      const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+      const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
       
       bot.sendMessage(userId, 
         `📱 الأرقام (${numbersCount} رقم):\n\n` +
@@ -1239,9 +1280,9 @@ async function handleNewTask(userId, isAdminUser) {
         `💵 المكافأة: ${reward} جنيه\n\n` +
         `📋 المطلوب:\n` +
         `${taskRequirements}\n\n` +
-        `⚠️ الحد الأدنى: 11 صورة\n` +
-        `⚠️ الحد الأقصى: 15 صورة\n` +
-        `الصور المستلمة: ${activeTask.proof_count}/15`,
+        `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
+        `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n` +
+        `الصور المستلمة: ${activeTask.proof_count}/${maxScreenshots}`,
         { parse_mode: 'Markdown' }
       );
     }, 1200);
@@ -1294,6 +1335,8 @@ async function handleNewTask(userId, isAdminUser) {
     const taskRequirements = getSetting('task_requirements') || 
       `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
       `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
+    const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+    const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
     
     bot.sendMessage(userId, 
       `📱 الأرقام (${numbersCount} رقم):\n\n` +
@@ -1301,8 +1344,8 @@ async function handleNewTask(userId, isAdminUser) {
       `💵 المكافأة: ${reward} جنيه\n\n` +
       `📋 المطلوب:\n` +
       `${taskRequirements}\n\n` +
-      `⚠️ الحد الأدنى: 11 صورة\n` +
-      `⚠️ الحد الأقصى: 15 صورة\n` +
+      `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
+      `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n` +
       `عند الانتهاء، أرسل الصور واحدة تلو الأخرى.`,
       { parse_mode: 'Markdown' }
     );
@@ -1523,15 +1566,17 @@ function handleSendProofReminder(userId) {
   }
   
   const currentPhotos = userProofPhotos[userId] ? userProofPhotos[userId].length : 0;
+  const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+  const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
   
   bot.sendMessage(userId, 
     `📸 إرسال الإثبات:\n\n` +
     `أرسل الصور الآن:\n` +
     `• 10 سكرينات من داخل الشات\n` +
     `• سكرينات من خارج الشات\n\n` +
-    `الصور المستلمة: ${currentPhotos}/15\n\n` +
-    `⚠️ الحد الأدنى: 11 صورة\n` +
-    `⚠️ الحد الأقصى: 15 صورة\n` +
+    `الصور المستلمة: ${currentPhotos}/${maxScreenshots}\n\n` +
+    `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
+    `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n` +
     `⚠️ أرسل الصور واحدة تلو الأخرى.\n\n` +
     `⚠️ تحذير: بعد تأكيد الإرسال لا يمكن التراجع!`
   );
@@ -1546,14 +1591,16 @@ function handleStartProofSubmission(userId) {
   }
   
   const currentPhotos = userProofPhotos[userId] ? userProofPhotos[userId].length : 0;
+  const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+  const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
   
   bot.sendMessage(userId, 
     `📸 إرسال الإثبات:\n\n` +
     `أرسل الصور الآن:\n` +
     `• 10 سكرينات من داخل الشات\n` +
     `• سكرينات من خارج الشات\n\n` +
-    `⚠️ الحد الأدنى: 11 صورة\n` +
-    `⚠️ الحد الأقصى: 15 صورة\n\n` +
+    `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
+    `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n\n` +
     `الصور المرسلة حالياً: ${currentPhotos}\n\n` +
     `بعد الانتهاء من إرسال جميع الصور، اضغط على "✅ تأكيد الإرسال"`,
     {
@@ -1578,6 +1625,7 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
     }
     
     const photos = userProofPhotos[userId] || [];
+    const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
     
     logInfo('User confirming photo submission', { userId, photoCount: photos.length });
     
@@ -1585,11 +1633,11 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
       return bot.sendMessage(userId, '❌ لم ترسل أي صور بعد!');
     }
     
-    if (photos.length < 11) {
+    if (photos.length < minScreenshots) {
       return bot.sendMessage(userId, 
         `❌ عدد الصور غير كافٍ!\n\n` +
         `الصور المرسلة: ${photos.length}\n` +
-        `الحد الأدنى: 11 صورة\n\n` +
+        `الحد الأدنى: ${minScreenshots} صورة\n\n` +
         `أرسل المزيد من الصور.`
       );
     }
@@ -2116,6 +2164,32 @@ async function handleUserStates(userId, text, msg) {
     delete userStates[userId];
     bot.sendMessage(userId, '✅ تم تحديث نص المطلوب');
   }
+  else if (state === 'admin_min_screenshots') {
+    const minValue = parseInt(text);
+    if (isNaN(minValue) || minValue < 1) {
+      return bot.sendMessage(userId, '❌ الرجاء إدخال رقم صحيح (أكبر من 0)\n\n📉 أرسل الحد الأدنى الجديد:');
+    }
+    const maxValue = parseInt(getSetting('max_screenshots') || '15');
+    if (minValue > maxValue) {
+      return bot.sendMessage(userId, `❌ الحد الأدنى لا يمكن أن يكون أكبر من الحد الأقصى (${maxValue})\n\n📉 أرسل الحد الأدنى الجديد:`);
+    }
+    db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(minValue.toString(), 'min_screenshots');
+    delete userStates[userId];
+    bot.sendMessage(userId, `✅ تم تحديث الحد الأدنى إلى ${minValue} صورة`, { reply_markup: getAdminKeyboard(userId) });
+  }
+  else if (state === 'admin_max_screenshots') {
+    const maxValue = parseInt(text);
+    if (isNaN(maxValue) || maxValue < 1) {
+      return bot.sendMessage(userId, '❌ الرجاء إدخال رقم صحيح (أكبر من 0)\n\n📈 أرسل الحد الأقصى الجديد:');
+    }
+    const minValue = parseInt(getSetting('min_screenshots') || '11');
+    if (maxValue < minValue) {
+      return bot.sendMessage(userId, `❌ الحد الأقصى لا يمكن أن يكون أقل من الحد الأدنى (${minValue})\n\n📈 أرسل الحد الأقصى الجديد:`);
+    }
+    db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(maxValue.toString(), 'max_screenshots');
+    delete userStates[userId];
+    bot.sendMessage(userId, `✅ تم تحديث الحد الأقصى إلى ${maxValue} صورة`, { reply_markup: getAdminKeyboard(userId) });
+  }
   else if (state === 'awaiting_add_admin_id') {
     // التحقق من أن المستخدم هو الأدمن الرئيسي فقط
     if (userId !== ADMIN_ID) {
@@ -2323,15 +2397,17 @@ function handleProofSubmission(userId, msg) {
   }
   
   const newCount = activeTask.proof_count + 1;
+  const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+  const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
   
-  // التحقق من عدم تجاوز 15 صورة
-  if (newCount > 15) {
-    return bot.sendMessage(userId, '⚠️ لقد وصلت للحد الأقصى (15 صورة)');
+  // التحقق من عدم تجاوز الحد الأقصى
+  if (newCount > maxScreenshots) {
+    return bot.sendMessage(userId, `⚠️ لقد وصلت للحد الأقصى (${maxScreenshots} صورة)`);
   }
   
   db.prepare('UPDATE tasks SET proof_count = ? WHERE id = ?').run(newCount, activeTask.id);
   
-  if (newCount >= 11) {
+  if (newCount >= minScreenshots) {
     const reward = parseFloat(getSetting('reward_amount'));
     db.prepare('UPDATE tasks SET status = ?, completed_at = CURRENT_TIMESTAMP WHERE id = ?').run('completed', activeTask.id);
     db.prepare('UPDATE users SET balance = balance + ? WHERE user_id = ?').run(reward, userId);

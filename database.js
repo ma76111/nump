@@ -69,6 +69,8 @@ insertSetting.run('task_requirements', '1️⃣ أرسل 10 سكرينات من 
 insertSetting.run('task_timeout', '90'); // الوقت بالدقائق
 insertSetting.run('usd_rate', '50'); // سعر الدولار بالجنيه
 insertSetting.run('how_to_work_video', 'none'); // معرف الفيديو التوضيحي
+insertSetting.run('min_screenshots', '11'); // الحد الأدنى للصور
+insertSetting.run('max_screenshots', '15'); // الحد الأقصى للصور
 
 // إضافة الأدمن الرئيسي (ID: 6793329200)
 const insertAdmin = db.prepare('INSERT OR IGNORE INTO admins (user_id, username, added_by) VALUES (?, ?, ?)');
