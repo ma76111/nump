@@ -870,41 +870,44 @@ bot.on('callback_query', async (query) => {
     );
   }
   else if (data.startsWith('withdraw_paid_')) {
-    const targetUserId = parseInt(data.split('_')[2]);
+    const requestId = parseInt(data.split('_')[2]);
     if (isAdmin(userId)) {
-      const withdrawal = pendingWithdrawals[targetUserId];
+      const request = db.prepare('SELECT * FROM withdrawal_requests WHERE id = ? AND status = ?').get(requestId, 'pending');
       
-      if (!withdrawal) {
-        return bot.answerCallbackQuery(query.id, { text: '❌ الطلب غير موجود', show_alert: true });
+      if (!request) {
+        return bot.answerCallbackQuery(query.id, { text: '❌ الطلب غير موجود أو تم معالجته', show_alert: true });
       }
       
-      const user = db.prepare('SELECT balance, username FROM users WHERE user_id = ?').get(targetUserId);
-      const withdrawAmount = withdrawal.amount;
+      const user = db.prepare('SELECT balance, username FROM users WHERE user_id = ?').get(request.user_id);
+      const withdrawAmount = request.amount;
       const usdRate = parseFloat(getSetting('usd_rate')) || 50;
       
       // خصم المبلغ من الرصيد
-      db.prepare('UPDATE users SET balance = balance - ? WHERE user_id = ?').run(withdrawAmount, targetUserId);
+      db.prepare('UPDATE users SET balance = balance - ? WHERE user_id = ?').run(withdrawAmount, request.user_id);
+      
+      // تحديث حالة الطلب في قاعدة البيانات
+      db.prepare('UPDATE withdrawal_requests SET status = ?, processed_at = CURRENT_TIMESTAMP WHERE id = ?').run('approved', requestId);
+      
+      // إزالة من الذاكرة المؤقتة
+      delete pendingWithdrawals[request.user_id];
       
       // إعداد رسالة للمستخدم
-      let walletType = withdrawal.method === 'binance' ? 'بينانس' : 'فودافون كاش';
+      let walletType = request.method === 'binance' ? 'بينانس' : 'فودافون كاش';
       let displayAmount = `${withdrawAmount} جنيه`;
       
-      if (withdrawal.method === 'binance') {
+      if (request.method === 'binance') {
         const amountInUSD = (withdrawAmount / usdRate).toFixed(2);
         displayAmount = `${withdrawAmount} جنيه (${amountInUSD} USDT)`;
       }
       
       // إرسال إشعار للمستخدم
-      bot.sendMessage(targetUserId, 
+      bot.sendMessage(request.user_id, 
         `✅ تم الدفع بنجاح!\n\n` +
         `💰 المبلغ: ${displayAmount}\n` +
         `📱 الطريقة: ${walletType}\n` +
-        `💳 المحفظة: ${withdrawal.wallet}\n\n` +
+        `💳 المحفظة: ${request.wallet_info}\n\n` +
         `تأكد من وصول المبلغ إلى محفظتك`
       );
-      
-      // إزالة طلب السحب
-      delete pendingWithdrawals[targetUserId];
       
       // إعداد اسم المستخدم للعرض
       const username = user.username ? `@${user.username}` : 'لا يوجد';
@@ -913,9 +916,9 @@ bot.on('callback_query', async (query) => {
       bot.editMessageText(
         `✅ تم تأكيد الدفع\n\n` +
         `👤 المستخدم: ${username}\n` +
-        `🆔 ID: ${targetUserId}\n` +
+        `🆔 ID: ${request.user_id}\n` +
         `💰 المبلغ: ${displayAmount}\n` +
-        `💳 المحفظة: ${withdrawal.wallet}`,
+        `💳 المحفظة: ${request.wallet_info}`,
         { chat_id: userId, message_id: messageId }
       );
       
@@ -931,29 +934,32 @@ bot.on('callback_query', async (query) => {
     }
   }
   else if (data.startsWith('withdraw_reject_')) {
-    const targetUserId = parseInt(data.split('_')[2]);
+    const requestId = parseInt(data.split('_')[2]);
     if (isAdmin(userId)) {
-      const withdrawal = pendingWithdrawals[targetUserId];
+      const request = db.prepare('SELECT * FROM withdrawal_requests WHERE id = ? AND status = ?').get(requestId, 'pending');
       
-      if (!withdrawal) {
-        return bot.answerCallbackQuery(query.id, { text: '❌ الطلب غير موجود', show_alert: true });
+      if (!request) {
+        return bot.answerCallbackQuery(query.id, { text: '❌ الطلب غير موجود أو تم معالجته', show_alert: true });
       }
       
+      // تحديث حالة الطلب في قاعدة البيانات
+      db.prepare('UPDATE withdrawal_requests SET status = ?, processed_at = CURRENT_TIMESTAMP WHERE id = ?').run('rejected', requestId);
+      
+      // إزالة من الذاكرة المؤقتة
+      delete pendingWithdrawals[request.user_id];
+      
       // إرسال إشعار للمستخدم
-      bot.sendMessage(targetUserId, 
+      bot.sendMessage(request.user_id, 
         `❌ تم رفض طلب السحب\n\n` +
-        `المبلغ: ${withdrawal.amount} جنيه\n\n` +
+        `المبلغ: ${request.amount} جنيه\n\n` +
         `يمكنك التواصل مع الدعم لمعرفة السبب`
       );
-      
-      // إزالة طلب السحب
-      delete pendingWithdrawals[targetUserId];
       
       // تحديث رسالة الأدمن
       bot.editMessageText(
         `❌ تم رفض الطلب\n\n` +
-        `المستخدم: ${targetUserId}\n` +
-        `المبلغ: ${withdrawal.amount} جنيه`,
+        `المستخدم: ${request.user_id}\n` +
+        `المبلغ: ${request.amount} جنيه`,
         { chat_id: userId, message_id: messageId }
       );
       
@@ -961,8 +967,8 @@ bot.on('callback_query', async (query) => {
       
       logInfo('Admin rejected withdrawal request', { 
         adminId: userId, 
-        targetUserId, 
-        amount: withdrawal.amount
+        targetUserId: request.user_id, 
+        amount: request.amount
       });
     }
   }
@@ -1837,6 +1843,15 @@ async function handleUserStates(userId, text, msg) {
       wallet: cleanPhone 
     };
     
+    // حفظ الطلب في قاعدة البيانات
+    db.prepare('INSERT INTO withdrawal_requests (user_id, amount, method, wallet_info, status) VALUES (?, ?, ?, ?, ?)').run(
+      userId, 
+      amount, 
+      'vodafone', 
+      cleanPhone, 
+      'pending'
+    );
+    
     delete userStates[userId];
     
     // عرض رسالة تأكيد بدون أزرار
@@ -1884,6 +1899,15 @@ async function handleUserStates(userId, text, msg) {
       method: 'binance',
       wallet: cleanID 
     };
+    
+    // حفظ الطلب في قاعدة البيانات
+    db.prepare('INSERT INTO withdrawal_requests (user_id, amount, method, wallet_info, status) VALUES (?, ?, ?, ?, ?)').run(
+      userId, 
+      amount, 
+      'binance', 
+      cleanID, 
+      'pending'
+    );
     
     delete userStates[userId];
     
@@ -3056,32 +3080,31 @@ setTimeout(checkCancelledTasks, 5000);
 
 function showWithdrawalRequests(adminId) {
   try {
-    // الحصول على جميع المستخدمين الذين لديهم طلبات سحب نشطة
-    const usersWithPendingWithdrawals = Object.keys(pendingWithdrawals).map(id => parseInt(id));
+    // الحصول على جميع طلبات السحب المعلقة من قاعدة البيانات
+    const pendingRequests = db.prepare('SELECT * FROM withdrawal_requests WHERE status = ? ORDER BY created_at DESC').all('pending');
     
-    if (usersWithPendingWithdrawals.length === 0) {
+    if (pendingRequests.length === 0) {
       return bot.sendMessage(adminId, '📭 لا توجد طلبات سحب حالياً', {
         reply_markup: getAdminKeyboard(adminId)
       });
     }
     
-    bot.sendMessage(adminId, `💸 لديك ${usersWithPendingWithdrawals.length} طلب سحب معلق\n\nسيتم عرض كل طلب بشكل منفصل...`);
+    bot.sendMessage(adminId, `💸 لديك ${pendingRequests.length} طلب سحب معلق\n\nسيتم عرض كل طلب بشكل منفصل...`);
     
     const usdRate = parseFloat(getSetting('usd_rate')) || 50;
     
     // عرض كل طلب في رسالة منفصلة
-    usersWithPendingWithdrawals.forEach((userId, index) => {
+    pendingRequests.forEach((request, index) => {
       setTimeout(() => {
-        const user = db.prepare('SELECT username FROM users WHERE user_id = ?').get(userId);
-        const withdrawal = pendingWithdrawals[userId];
+        const user = db.prepare('SELECT username FROM users WHERE user_id = ?').get(request.user_id);
         
-        if (user && withdrawal && withdrawal.wallet) {
-          const withdrawAmount = withdrawal.amount;
-          let walletType = withdrawal.method === 'binance' ? 'بينانس' : 'فودافون كاش';
-          let displayWallet = withdrawal.wallet;
+        if (user) {
+          const withdrawAmount = request.amount;
+          let walletType = request.method === 'binance' ? 'بينانس' : 'فودافون كاش';
+          let displayWallet = request.wallet_info;
           let displayAmount = `${withdrawAmount} جنيه`;
           
-          if (withdrawal.method === 'binance') {
+          if (request.method === 'binance') {
             const amountInUSD = (withdrawAmount / usdRate).toFixed(2);
             displayAmount = `${withdrawAmount} جنيه (${amountInUSD} USDT)`;
           }
@@ -3090,7 +3113,7 @@ function showWithdrawalRequests(adminId) {
           
           let message = `💳 طلب سحب #${index + 1}\n\n`;
           message += `👤 المستخدم: ${username}\n`;
-          message += `🆔 ID: ${userId}\n`;
+          message += `🆔 ID: ${request.user_id}\n`;
           message += `💰 المبلغ: ${displayAmount}\n`;
           message += `📱 الطريقة: ${walletType}\n`;
           message += `💳 المحفظة: ${displayWallet}\n`;
@@ -3098,8 +3121,8 @@ function showWithdrawalRequests(adminId) {
           bot.sendMessage(adminId, message, {
             reply_markup: {
               inline_keyboard: [
-                [{ text: '✅ تم الدفع', callback_data: `withdraw_paid_${userId}` }],
-                [{ text: '❌ رفض الطلب', callback_data: `withdraw_reject_${userId}` }]
+                [{ text: '✅ تم الدفع', callback_data: `withdraw_paid_${request.id}` }],
+                [{ text: '❌ رفض الطلب', callback_data: `withdraw_reject_${request.id}` }]
               ]
             }
           });
@@ -3107,7 +3130,7 @@ function showWithdrawalRequests(adminId) {
       }, index * 500); // تأخير 500ms بين كل رسالة
     });
     
-    logInfo('Admin viewed withdrawal requests', { adminId, count: usersWithPendingWithdrawals.length });
+    logInfo('Admin viewed withdrawal requests', { adminId, count: pendingRequests.length });
   } catch (error) {
     logError('Error showing withdrawal requests', error, adminId);
     bot.sendMessage(adminId, '❌ حدث خطأ في عرض طلبات السحب');
