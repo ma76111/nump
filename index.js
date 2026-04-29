@@ -1065,7 +1065,7 @@ bot.on('callback_query', async (query) => {
 });
 
 // الحصول على مهمة جديدة
-async function handleNewTask(userId, isAdmin) {
+async function handleNewTask(userId, isAdminUser) {
   // منع إنشاء مهام متعددة في نفس الوقت (Race Condition Protection)
   if (taskCreationLocks[userId]) {
     const lockTime = Date.now() - taskCreationLocks[userId];
@@ -1647,9 +1647,8 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
 }
 
 // إلغاء وحذف الصور
-function handleCancelProofSubmission(userId, isAdmin) {
+function handleCancelProofSubmission(userId, isAdminUser) {
   try {
-    const isAdminUser = isAdmin(userId);
     if (userProofPhotos[userId]) {
       const count = userProofPhotos[userId].length;
       delete userProofPhotos[userId];
