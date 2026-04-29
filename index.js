@@ -274,10 +274,10 @@ function getAdminKeyboard(userId) {
     ['👥 إدارة المستخدمين', '📊 إحصائيات البوت'],
     ['💵 تعديل المكافأة', '📝 تعديل الإعلان'],
     ['⏰ تعديل وقت المهمة', '💲 تعديل سعر الدولار'],
-    ['📞 تعديل نص الدعم', '📱 إدارة المجموعات'],
-    ['📋 المجموعات المعلقة', '✅ الموافقة والدفع'],
-    ['💸 طلبات السحب', '📋 تقرير مستخدم'],
-    ['🎥 تحديث فيديو الشرح']
+    ['📞 تعديل نص الدعم', '� تعديل المطلوب'],
+    ['�📱 إدارة المجموعات', '📋 المجموعات المعلقة'],
+    ['✅ الموافقة والدفع', '💸 طلبات السحب'],
+    ['📋 تقرير مستخدم', '🎥 تحديث فيديو الشرح']
   ];
   
   // إضافة أزرار خاصة بالأدمن الرئيسي فقط
@@ -669,6 +669,14 @@ bot.on('message', async (msg) => {
     bot.sendMessage(userId, 
       `📞 النص الحالي:\n\n${currentText}\n\n` +
       `أرسل نص الدعم الجديد:`
+    );
+  }
+  else if (text === '📋 تعديل المطلوب' && isAdmin(userId)) {
+    userStates[userId] = 'admin_task_requirements';
+    const currentRequirements = getSetting('task_requirements') || '1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام';
+    bot.sendMessage(userId, 
+      `📋 النص الحالي:\n\n${currentRequirements}\n\n` +
+      `أرسل نص المطلوب الجديد:`
     );
   }
   else if (text === '🎥 تحديث فيديو الشرح' && isAdmin(userId)) {
@@ -1131,14 +1139,16 @@ async function handleNewTask(userId, isAdmin) {
       setTimeout(() => {
         const numbersCount = group.numbers.split('\n').filter(n => n.trim().length > 0).length;
         const formattedNumbers = formatNumbersForCopy(group.numbers);
+        const taskRequirements = getSetting('task_requirements') || 
+          `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
+          `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
         
         bot.sendMessage(userId, 
-          `📱 الأرقام (${numbersCount} رقم):\n\n` +
+          `� الأرقام (${numbersCount} رقم):\n\n` +
           `${formattedNumbers}\n\n` +
           `💵 المكافأة: ${reward} جنيه\n\n` +
           `📋 المطلوب:\n` +
-          `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
-          `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
+          `${taskRequirements}\n\n` +
           `⚠️ الحد الأدنى: 11 صورة\n` +
           `⚠️ الحد الأقصى: 15 صورة\n` +
           `الصور المستلمة: ${task.proof_count}/15`,
@@ -1213,14 +1223,16 @@ async function handleNewTask(userId, isAdmin) {
     setTimeout(() => {
       const numbersCount = group.numbers.split('\n').filter(n => n.trim().length > 0).length;
       const formattedNumbers = formatNumbersForCopy(group.numbers);
+      const taskRequirements = getSetting('task_requirements') || 
+        `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
+        `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
       
       bot.sendMessage(userId, 
         `📱 الأرقام (${numbersCount} رقم):\n\n` +
         `${formattedNumbers}\n\n` +
         `💵 المكافأة: ${reward} جنيه\n\n` +
         `📋 المطلوب:\n` +
-        `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
-        `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
+        `${taskRequirements}\n\n` +
         `⚠️ الحد الأدنى: 11 صورة\n` +
         `⚠️ الحد الأقصى: 15 صورة\n` +
         `الصور المستلمة: ${activeTask.proof_count}/15`,
@@ -1273,14 +1285,16 @@ async function handleNewTask(userId, isAdmin) {
   setTimeout(() => {
     const numbersCount = availableGroup.numbers.split('\n').filter(n => n.trim().length > 0).length;
     const formattedNumbers = formatNumbersForCopy(availableGroup.numbers);
+    const taskRequirements = getSetting('task_requirements') || 
+      `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
+      `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
     
     bot.sendMessage(userId, 
-      `📱 الأرقام (${numbersCount} رقم):\n\n` +
+      `� الأرقام (${numbersCount} رقم):\n\n` +
       `${formattedNumbers}\n\n` +
       `💵 المكافأة: ${reward} جنيه\n\n` +
       `📋 المطلوب:\n` +
-      `1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n` +
-      `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام\n\n` +
+      `${taskRequirements}\n\n` +
       `⚠️ الحد الأدنى: 11 صورة\n` +
       `⚠️ الحد الأقصى: 15 صورة\n` +
       `عند الانتهاء، أرسل الصور واحدة تلو الأخرى.`,
@@ -2075,6 +2089,11 @@ async function handleUserStates(userId, text, msg) {
     db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(text, 'support_text');
     delete userStates[userId];
     bot.sendMessage(userId, '✅ تم تحديث نص الدعم');
+  }
+  else if (state === 'admin_task_requirements') {
+    db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(text, 'task_requirements');
+    delete userStates[userId];
+    bot.sendMessage(userId, '✅ تم تحديث نص المطلوب');
   }
   else if (state === 'awaiting_add_admin_id') {
     // التحقق من أن المستخدم هو الأدمن الرئيسي فقط

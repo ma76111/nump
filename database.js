@@ -65,6 +65,7 @@ const insertSetting = db.prepare('INSERT OR IGNORE INTO settings (key, value) VA
 insertSetting.run('reward_amount', '10');
 insertSetting.run('advertisement_text', 'نص الإعلان الافتراضي');
 insertSetting.run('support_text', 'للتواصل مع الدعم الفني، يرجى إرسال رسالة إلى:\n\n@support_username\n\nأو عبر البريد الإلكتروني:\nsupport@example.com');
+insertSetting.run('task_requirements', '1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام');
 insertSetting.run('task_timeout', '90'); // الوقت بالدقائق
 insertSetting.run('usd_rate', '50'); // سعر الدولار بالجنيه
 insertSetting.run('how_to_work_video', 'none'); // معرف الفيديو التوضيحي
