@@ -275,7 +275,7 @@ function getAdminKeyboard(userId) {
     ['💵 تعديل المكافأة', '📝 تعديل الإعلان'],
     ['⏰ تعديل وقت المهمة', '💲 تعديل سعر الدولار'],
     ['📞 تعديل نص الدعم', '📋 تعديل المطلوب'],
-    [' إدارة المجموعات', '� المجموعات المعلقة'],
+    ['📂 إدارة المجموعات', '⏳ المجموعات المعلقة'],
     ['✅ الموافقة والدفع', '💸 طلبات السحب'],
     ['📋 تقرير مستخدم', '🎥 تحديث فيديو الشرح']
   ];
@@ -651,11 +651,11 @@ bot.on('message', async (msg) => {
       `أرسل السعر الجديد (مثال: 50 أو 55):`
     );
   }
-  else if (text === '📱 إدارة المجموعات' && isAdmin(userId)) {
+  else if (text === '📂 إدارة المجموعات' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showAdminGroups(userId);
   }
-  else if (text === '📋 المجموعات المعلقة' && isAdmin(userId)) {
+  else if (text === '⏳ المجموعات المعلقة' && isAdmin(userId)) {
     delete userStates[userId]; // مسح أي حالة سابقة
     showPendingGroups(userId);
   }
