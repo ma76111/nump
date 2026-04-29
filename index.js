@@ -1144,7 +1144,7 @@ async function handleNewTask(userId, isAdmin) {
           `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
         
         bot.sendMessage(userId, 
-          `� الأرقام (${numbersCount} رقم):\n\n` +
+          `📱 الأرقام (${numbersCount} رقم):\n\n` +
           `${formattedNumbers}\n\n` +
           `💵 المكافأة: ${reward} جنيه\n\n` +
           `📋 المطلوب:\n` +
@@ -1290,7 +1290,7 @@ async function handleNewTask(userId, isAdmin) {
       `2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام`;
     
     bot.sendMessage(userId, 
-      `� الأرقام (${numbersCount} رقم):\n\n` +
+      `📱 الأرقام (${numbersCount} رقم):\n\n` +
       `${formattedNumbers}\n\n` +
       `💵 المكافأة: ${reward} جنيه\n\n` +
       `📋 المطلوب:\n` +
@@ -1346,8 +1346,7 @@ function handleProfile(userId) {
 }
 
 // إلغاء المهمة
-function handleCancelTask(userId, isAdmin) {
-  const isAdminUser = isAdmin(userId);
+function handleCancelTask(userId, isAdminUser) {
   const activeTask = db.prepare('SELECT * FROM tasks WHERE user_id = ? AND status = ?').get(userId, 'active');
   
   if (!activeTask) {
@@ -1425,8 +1424,7 @@ function handleCancelTask(userId, isAdmin) {
 }
 
 // استرجاع المهمة الملغاة
-function handleRestoreTask(userId, isAdmin) {
-  const isAdminUser = isAdmin(userId);
+function handleRestoreTask(userId, isAdminUser) {
   const cancelledTask = cancelledTasks[userId];
   
   if (!cancelledTask) {
