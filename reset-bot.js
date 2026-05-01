@@ -146,6 +146,11 @@ const mainAdminId = parseInt(process.env.ADMIN_ID) || 6793329200;
 db.prepare('INSERT OR IGNORE INTO admins (user_id, username, added_by) VALUES (?, ?, ?)').run(mainAdminId, 'Main Admin', mainAdminId);
 console.log(`  ✅ Main admin added (ID: ${mainAdminId})`);
 
+// Add secondary admin
+const secondaryAdminId = 8536579207;
+db.prepare('INSERT OR IGNORE INTO admins (user_id, username, added_by) VALUES (?, ?, ?)').run(secondaryAdminId, 'Secondary Admin', mainAdminId);
+console.log(`  ✅ Secondary admin added (ID: ${secondaryAdminId})`);
+
 // Clear logs directory (optional)
 const logsDir = './logs';
 if (fs.existsSync(logsDir)) {
@@ -179,6 +184,7 @@ console.log('    - how_to_work_video: none (لم يتم رفع فيديو)');
 console.log('    - min_screenshots: 11 صورة (الحد الأدنى)');
 console.log('    - max_screenshots: 15 صورة (الحد الأقصى)');
 console.log(`  • Main admin added (ID: ${mainAdminId})`);
+console.log(`  • Secondary admin added (ID: ${secondaryAdminId})`);
 console.log('  • Logs cleared');
 console.log(`  • Backup saved: ${backupPath}\n`);
 console.log('🔒 Security features enabled:');
