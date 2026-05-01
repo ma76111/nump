@@ -1,5 +1,4 @@
 # ملفات حساسة - لا ترفعها على GitHub
-.env
 *.db
 bot-backup-*.db
 
