@@ -126,7 +126,9 @@ const defaultSettings = [
   { key: 'task_requirements', value: '1️⃣ أرسل 10 سكرينات من داخل الشات (سكرينة من داخل الشات بعد ما أرسلت الرسالة)\n2️⃣ أرسل سكرينات من خارج الشات تثبت إرسال الرسائل لجميع الأرقام', description: 'نص المطلوب في المهمة' },
   { key: 'task_timeout', value: '90', description: 'وقت إتمام المهمة (دقيقة)' },
   { key: 'usd_rate', value: '50', description: 'سعر الدولار (جنيه)' },
-  { key: 'how_to_work_video', value: 'none', description: 'فيديو شرح طريقة العمل' }
+  { key: 'how_to_work_video', value: 'none', description: 'فيديو شرح طريقة العمل' },
+  { key: 'min_screenshots', value: '11', description: 'الحد الأدنى للصور' },
+  { key: 'max_screenshots', value: '15', description: 'الحد الأقصى للصور' }
 ];
 
 const insertSetting = db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)');
@@ -174,6 +176,8 @@ console.log('    - task_requirements: نص المطلوب (قابل للتعدي
 console.log('    - task_timeout: 90 دقيقة');
 console.log('    - usd_rate: 50 جنيه للدولار');
 console.log('    - how_to_work_video: none (لم يتم رفع فيديو)');
+console.log('    - min_screenshots: 11 صورة (الحد الأدنى)');
+console.log('    - max_screenshots: 15 صورة (الحد الأقصى)');
 console.log(`  • Main admin added (ID: ${mainAdminId})`);
 console.log('  • Logs cleared');
 console.log(`  • Backup saved: ${backupPath}\n`);
