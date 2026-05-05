@@ -462,6 +462,11 @@ bot.on('message', async (msg) => {
         return bot.sendMessage(userId, '⚠️ لا يمكنك إرسال المزيد من الصور بعد تأكيد الإرسال!');
       }
       
+      // التحقق من حالة إرسال الإثبات
+      if (!state || state !== 'sending_proof') {
+        return; // تجاهل الصور إذا لم يكن في حالة إرسال الإثبات
+      }
+      
       // التحقق من وجود مهمة نشطة
       const activeTask = db.prepare('SELECT * FROM tasks WHERE user_id = ? AND status = ?').get(userId, 'active');
       if (!activeTask) {
@@ -490,15 +495,16 @@ bot.on('message', async (msg) => {
       userProofPhotos[userId].push(photoId);
       
       const currentCount = userProofPhotos[userId].length;
+      const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
       logInfo('User sent photo', { userId, photoCount: currentCount, photoId });
       
       // إرسال رسالة تأكيد بسيطة (سيتم حذفها بعد ثانية)
-      bot.sendMessage(userId, `✅ ${currentCount}/20`).then(sentMsg => {
+      bot.sendMessage(userId, `✅ تم استلام الصورة ${currentCount}/${maxScreenshots}\n\n⚠️ الحد الأدنى: ${minScreenshots} صورة`).then(sentMsg => {
         setTimeout(() => {
           bot.deleteMessage(userId, sentMsg.message_id).catch((err) => {
             logWarning('Failed to delete confirmation message', { userId, error: err.message });
           });
-        }, 2000);
+        }, 3000);
       }).catch((err) => {
         logError('Failed to send photo confirmation', err, userId);
       });
@@ -616,9 +622,12 @@ bot.on('message', async (msg) => {
     const isAdminUser = isAdmin(userId);
     handleConfirmProofSubmission(userId, isAdminUser);
   }
-  else if (text === '❌ إلغاء وحذف الصور') {
+  else if (text === '❌ إلغاء وحذف الكل') {
     const isAdminUser = isAdmin(userId);
     handleCancelProofSubmission(userId, isAdminUser);
+  }
+  else if (text === '🗑️ حذف صورة') {
+    handleDeletePhoto(userId);
   }
   // أزرار الأدمن
   else if (text === '👥 إدارة المستخدمين' && isAdmin(userId)) {
@@ -1068,15 +1077,50 @@ bot.on('callback_query', async (query) => {
     bot.deleteMessage(userId, query.message.message_id).catch((err) => {
       logWarning('Failed to delete confirmation message', { userId, error: err.message });
     });
+    // إزالة القفل للسماح بإرسال المزيد من الصور
+    delete userPhotoLocks[userId];
     bot.sendMessage(userId, '❌ تم إلغاء العملية\n\nيمكنك إرسال المزيد من الصور أو حذفها.', {
       reply_markup: {
         keyboard: [
           ['✅ تأكيد الإرسال'],
-          ['❌ إلغاء وحذف الصور']
+          ['🗑️ حذف صورة', '❌ إلغاء وحذف الكل']
         ],
         resize_keyboard: true
       }
     });
+  }
+  else if (data.startsWith('delete_photo_')) {
+    const photoIndex = parseInt(data.split('_')[2]);
+    const photos = userProofPhotos[userId] || [];
+    
+    if (photoIndex >= 0 && photoIndex < photos.length) {
+      photos.splice(photoIndex, 1);
+      userProofPhotos[userId] = photos;
+      
+      bot.deleteMessage(userId, query.message.message_id).catch(() => {});
+      
+      const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
+      const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
+      
+      bot.sendMessage(userId, 
+        `✅ تم حذف الصورة ${photoIndex + 1}\n\n` +
+        `📊 الصور المتبقية: ${photos.length}/${maxScreenshots}\n` +
+        `⚠️ الحد الأدنى: ${minScreenshots} صورة`,
+        {
+          reply_markup: {
+            keyboard: [
+              ['✅ تأكيد الإرسال'],
+              ['🗑️ حذف صورة', '❌ إلغاء وحذف الكل']
+            ],
+            resize_keyboard: true
+          }
+        }
+      );
+    }
+  }
+  else if (data === 'cancel_delete_photo') {
+    bot.deleteMessage(userId, query.message.message_id).catch(() => {});
+    bot.sendMessage(userId, '❌ تم إلغاء العملية');
   }
   else if (data.startsWith('review_task_')) {
     const taskId = parseInt(data.split('_')[2]);
@@ -1590,24 +1634,27 @@ function handleStartProofSubmission(userId) {
     return bot.sendMessage(userId, '❌ ليس لديك مهمة نشطة.');
   }
   
-  const currentPhotos = userProofPhotos[userId] ? userProofPhotos[userId].length : 0;
+  // تفعيل حالة إرسال الإثبات
+  userStates[userId] = 'sending_proof';
+  
+  // حذف أي صور قديمة والبدء من الصفر
+  delete userProofPhotos[userId];
+  delete userPhotoLocks[userId];
+  
   const minScreenshots = parseInt(getSetting('min_screenshots') || '11');
   const maxScreenshots = parseInt(getSetting('max_screenshots') || '15');
   
   bot.sendMessage(userId, 
-    `📸 إرسال الإثبات:\n\n` +
-    `أرسل الصور الآن:\n` +
-    `• 10 سكرينات من داخل الشات\n` +
-    `• سكرينات من خارج الشات\n\n` +
+    `📸 إرسال الإثبات\n\n` +
     `⚠️ الحد الأدنى: ${minScreenshots} صورة\n` +
     `⚠️ الحد الأقصى: ${maxScreenshots} صورة\n\n` +
-    `الصور المرسلة حالياً: ${currentPhotos}\n\n` +
-    `بعد الانتهاء من إرسال جميع الصور، اضغط على "✅ تأكيد الإرسال"`,
+    `📤 ابدأ بإرسال الصور الآن (فردية أو مجموعات)\n\n` +
+    `بعد الانتهاء، اضغط "✅ تأكيد الإرسال"`,
     {
       reply_markup: {
         keyboard: [
           ['✅ تأكيد الإرسال'],
-          ['❌ إلغاء وحذف الصور']
+          ['🗑️ حذف صورة', '❌ إلغاء وحذف الكل']
         ],
         resize_keyboard: true
       }
@@ -1706,13 +1753,14 @@ function handleCancelProofSubmission(userId, isAdminUser) {
     if (userProofPhotos[userId]) {
       const count = userProofPhotos[userId].length;
       delete userProofPhotos[userId];
-      delete userPhotoLocks[userId]; // إزالة القفل
+      delete userPhotoLocks[userId];
+      delete userStates[userId]; // حذف حالة إرسال الإثبات
       
       logInfo('User cancelled photo submission', { userId, photoCount: count });
       
       bot.sendMessage(userId, 
         `✅ تم حذف ${count} صورة\n\n` +
-        `يمكنك البدء من جديد.`,
+        `يمكنك البدء من جديد بالضغط على "📸 إرسال الإثبات"`,
         {
           reply_markup: {
             keyboard: [
@@ -1725,10 +1773,54 @@ function handleCancelProofSubmission(userId, isAdminUser) {
         }
       );
     } else {
-      bot.sendMessage(userId, '❌ لا توجد صور لحذفها.', { reply_markup: getMainKeyboard(isAdminUser) });
+      delete userStates[userId]; // حذف حالة إرسال الإثبات
+      bot.sendMessage(userId, 
+        '❌ لا توجد صور لحذفها.',
+        {
+          reply_markup: {
+            keyboard: [
+              ['⏱️ عرض الوقت المتبقي'],
+              ['📸 إرسال الإثبات'],
+              ['❌ إلغاء المهمة']
+            ],
+            resize_keyboard: true
+          }
+        }
+      );
     }
   } catch (error) {
     logError('Error cancelling proof submission', error, userId);
+    bot.sendMessage(userId, '❌ حدث خطأ').catch(() => {});
+  }
+}
+
+// حذف صورة معينة
+function handleDeletePhoto(userId) {
+  try {
+    const photos = userProofPhotos[userId] || [];
+    
+    if (photos.length === 0) {
+      return bot.sendMessage(userId, '❌ لا توجد صور لحذفها!');
+    }
+    
+    // عرض الصور مع أزرار للحذف
+    const buttons = [];
+    for (let i = 0; i < photos.length; i++) {
+      buttons.push([{ text: `🗑️ حذف صورة ${i + 1}`, callback_data: `delete_photo_${i}` }]);
+    }
+    buttons.push([{ text: '❌ إلغاء', callback_data: 'cancel_delete_photo' }]);
+    
+    bot.sendMessage(userId, 
+      `📸 لديك ${photos.length} صورة\n\n` +
+      `اختر الصورة التي تريد حذفها:`,
+      {
+        reply_markup: {
+          inline_keyboard: buttons
+        }
+      }
+    );
+  } catch (error) {
+    logError('Error in handleDeletePhoto', error, userId);
     bot.sendMessage(userId, '❌ حدث خطأ').catch(() => {});
   }
 }
@@ -1761,6 +1853,7 @@ function handleFinalConfirmProof(userId) {
     // حذف الصور المؤقتة والقفل والبيانات المؤقتة
     delete userProofPhotos[userId];
     delete userPhotoLocks[userId];
+    delete userStates[userId]; // حذف حالة إرسال الإثبات
     delete secondCancellation[userId]; // حذف علامة المحاولة الثانية
     delete cancelledTasks[userId]; // حذف المهام الملغاة المؤقتة
     
