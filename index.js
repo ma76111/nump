@@ -1265,6 +1265,8 @@ async function handleNewTask(userId, isAdminUser) {
         bot.sendMessage(userId, 
           `📱 الأرقام (${numbersCount} رقم):\n\n` +
           `${formattedNumbers}\n\n` +
+          `⚠️ *تحذير مهم:* انتظر دقيقة أو أكثر بين كل رسالة\n` +
+          `   (حتى لا يتم حظرك من واتساب)\n\n` +
           `💵 المكافأة: ${reward} جنيه\n\n` +
           `📋 المطلوب:\n` +
           `${taskRequirements}\n\n` +
@@ -1351,6 +1353,8 @@ async function handleNewTask(userId, isAdminUser) {
       bot.sendMessage(userId, 
         `📱 الأرقام (${numbersCount} رقم):\n\n` +
         `${formattedNumbers}\n\n` +
+        `⚠️ *تحذير مهم:* انتظر دقيقة أو أكثر بين كل رسالة\n` +
+        `   (حتى لا يتم حظرك من واتساب)\n\n` +
         `💵 المكافأة: ${reward} جنيه\n\n` +
         `📋 المطلوب:\n` +
         `${taskRequirements}\n\n` +
@@ -1415,6 +1419,8 @@ async function handleNewTask(userId, isAdminUser) {
     bot.sendMessage(userId, 
       `📱 الأرقام (${numbersCount} رقم):\n\n` +
       `${formattedNumbers}\n\n` +
+      `⚠️ *تحذير مهم:* انتظر دقيقة أو أكثر بين كل رسالة\n` +
+      `   (حتى لا يتم حظرك من واتساب)\n\n` +
       `💵 المكافأة: ${reward} جنيه\n\n` +
       `📋 المطلوب:\n` +
       `${taskRequirements}\n\n` +
@@ -3016,7 +3022,7 @@ function handleHowToWork(userId) {
     `• انتظر موافقة الأدمن\n\n` +
     
     `⚠️ *تحذيرات مهمة:*\n` +
-    `• انتظر دقبقة او اكثر بين كل رسالة (مهم جداً!)\n` +
+    `• انتظر دقيقة او اكثر بين كل رسالة (مهم جداً!)\n` +
     `• لا تلغي المهام بدون سبب\n` +
     `• 5 محاولات فاشلة = حظر دائم\n` +
     `• أكمل المهمة خلال الوقت المحدد\n` +
