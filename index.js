@@ -1724,17 +1724,64 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
     logInfo('Photo submission locked for user', { userId });
     
     // إرسال رسالة انتظار
-    const waitMsg = await bot.sendMessage(userId, '⏳ جاري تحضير الصور للمراجعة...');
+    const waitMsg = await bot.sendMessage(userId, '⏳ جاري التحقق من الصور...');
     
     try {
+      // التحقق من صحة الصور (هل ما زالت موجودة؟)
+      const validPhotos = [];
+      const invalidPhotos = [];
+      
+      for (let i = 0; i < photos.length; i++) {
+        try {
+          // محاولة الحصول على معلومات الصورة للتأكد من وجودها
+          await bot.getFile(photos[i]);
+          validPhotos.push(photos[i]);
+        } catch (error) {
+          // الصورة محذوفة أو غير صالحة
+          invalidPhotos.push(i + 1);
+          logWarning('Invalid photo detected', { userId, photoIndex: i, photoId: photos[i] });
+        }
+      }
+      
+      // إذا كانت هناك صور محذوفة
+      if (invalidPhotos.length > 0) {
+        // تحديث القائمة
+        userProofPhotos[userId] = validPhotos;
+        delete userPhotoLocks[userId]; // إزالة القفل
+        
+        bot.deleteMessage(userId, waitMsg.message_id).catch(() => {});
+        
+        return bot.sendMessage(userId, 
+          `⚠️ تم اكتشاف صور محذوفة!\n\n` +
+          `📊 الصور الصالحة: ${validPhotos.length}\n` +
+          `🗑️ الصور المحذوفة: ${invalidPhotos.length}\n` +
+          `⚠️ الحد الأدنى: ${minScreenshots} صورة\n\n` +
+          `${validPhotos.length < minScreenshots ? '❌ عدد الصور غير كافٍ! أرسل المزيد.' : '✅ يمكنك المتابعة أو إرسال المزيد.'}`,
+          {
+            reply_markup: {
+              keyboard: [
+                ['✅ تأكيد الإرسال'],
+                ['❌ إلغاء وحذف الكل']
+              ],
+              resize_keyboard: true
+            }
+          }
+        );
+      }
+      
+      // جميع الصور صالحة - المتابعة
+      bot.deleteMessage(userId, waitMsg.message_id).catch(() => {});
+      
+      const verifyMsg = await bot.sendMessage(userId, '⏳ جاري تحضير الصور للمراجعة...');
+      
       // إرسال الصور في مجموعات (Telegram يسمح بـ 10 صور كحد أقصى في كل مجموعة)
       const mediaGroups = [];
-      for (let i = 0; i < photos.length; i += 10) {
-        const chunk = photos.slice(i, i + 10);
+      for (let i = 0; i < validPhotos.length; i += 10) {
+        const chunk = validPhotos.slice(i, i + 10);
         const mediaGroup = chunk.map((photoId, index) => ({
           type: 'photo',
           media: photoId,
-          caption: i === 0 && index === 0 ? `📸 الصور المرسلة (${photos.length} صورة)` : undefined
+          caption: i === 0 && index === 0 ? `📸 الصور المرسلة (${validPhotos.length} صورة)` : undefined
         }));
         mediaGroups.push(mediaGroup);
       }
@@ -1747,12 +1794,12 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
       }
       
       // حذف رسالة الانتظار
-      bot.deleteMessage(userId, waitMsg.message_id);
+      bot.deleteMessage(userId, verifyMsg.message_id).catch(() => {});
       
       // عرض تأكيد نهائي
       bot.sendMessage(userId, 
         `👀 ألقِ نظرة أخيرة على الصور\n\n` +
-        `📊 عدد الصور: ${photos.length}\n\n` +
+        `📊 عدد الصور: ${validPhotos.length}\n\n` +
         `⚠️ تحذير: بعد التأكيد لا يمكن التراجع!\n` +
         `هل أنت متأكد من إرسال الإثبات؟`,
         {
@@ -1767,12 +1814,14 @@ async function handleConfirmProofSubmission(userId, isAdminUser) {
         }
       );
     } catch (error) {
-      logError('Error sending media group', error, userId);
+      logError('Error verifying photos', error, userId);
       bot.deleteMessage(userId, waitMsg.message_id).catch(() => {});
-      bot.sendMessage(userId, '❌ حدث خطأ في عرض الصور. حاول مرة أخرى.').catch(() => {});
+      delete userPhotoLocks[userId]; // إزالة القفل
+      bot.sendMessage(userId, '❌ حدث خطأ في التحقق من الصور. حاول مرة أخرى.').catch(() => {});
     }
   } catch (error) {
     logError('Error in handleConfirmProofSubmission', error, userId);
+    delete userPhotoLocks[userId]; // إزالة القفل
     bot.sendMessage(userId, '❌ حدث خطأ. حاول مرة أخرى.').catch(() => {});
   }
 }
